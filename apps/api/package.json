@@ -1,0 +1,23 @@
+{
+  "name": "@bwp/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- next dev -p 3001",
+    "build": "next build",
+    "start": "dotenv -e ../../.env -- next start -p 3001",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bwp/db": "workspace:*",
+    "@bwp/shared": "workspace:*",
+    "next": "^16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "~19.3.0",
+    "dotenv-cli": "^8.0.0"
+  }
+}

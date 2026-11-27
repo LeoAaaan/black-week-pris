@@ -1,0 +1,133 @@
+// Datamodell for Black Week-pris.
+// Alle beløp lagres som heltall i øre (1 kr = 100 øre).
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+model Store {
+  id                     String   @id @default(cuid())
+  slug                   String   @unique
+  name                   String
+  websiteUrl             String
+  logoUrl                String?
+  /// Standard frakt i øre når adapteren ikke finner frakt for et produkt.
+  defaultShippingOre     Int?
+  /// Gratis frakt når varen koster minst så mye (øre).
+  freeShippingFromOre    Int?
+  /// api | feed | jsonld | scrape | mock
+  dataSource             String   @default("mock")
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  offers                 Offer[]
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  products  Product[]
+}
+
+model Product {
+  id           String              @id @default(cuid())
+  slug         String              @unique
+  name         String
+  brand        String
+  modelNumber  String?
+  imageUrl     String?
+  categoryId   String
+  category     Category            @relation(fields: [categoryId], references: [id])
+  /// normalizeForSearch(merke + navn + modellnummer), brukes til trigram-søk.
+  searchText   String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  identifiers  ProductIdentifier[]
+  offers       Offer[]
+
+  @@index([brand])
+  @@index([categoryId])
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "Product_searchText_trgm_idx")
+}
+
+enum IdentifierType {
+  GTIN
+  MPN
+}
+
+/// Et produkt kan ha flere EAN-er (f.eks. ulike farger eller regioner). GTIN lagres normalisert til 14 siffer.
+model ProductIdentifier {
+  id        String         @id @default(cuid())
+  productId String
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      IdentifierType
+  value     String
+
+  @@unique([type, value])
+  @@index([productId])
+}
+
+enum StockStatus {
+  in_stock
+  low_stock
+  out_of_stock
+  preorder
+  unknown
+}
+
+/// Ett tilbud per produkt per butikk. Prisendringer logges i PriceHistory.
+model Offer {
+  id              String         @id @default(cuid())
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId         String
+  store           Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  /// Butikkens egen produkt-ID/SKU.
+  externalId      String?
+  url             String
+  /// Navnet butikken bruker, nyttig ved feilsøking av matching.
+  storeTitle      String?
+  priceOre        Int
+  beforePriceOre  Int?
+  /// null = ukjent, 0 = gratis frakt.
+  shippingOre     Int?
+  stockStatus     StockStatus    @default(unknown)
+  deliveryDaysMin Int?
+  deliveryDaysMax Int?
+  /// Når nåprisen trådte i kraft.
+  priceChangedAt  DateTime       @default(now())
+  /// Laveste pris de 30 dagene før nåprisen startet. Regnes ut ved hver prisendring (checkDeal).
+  lowest30Ore     Int?
+  /// Sist vi hentet tilbudet fra butikken.
+  lastCheckedAt   DateTime       @default(now())
+  firstSeenAt     DateTime       @default(now())
+  active          Boolean        @default(true)
+  history         PriceHistory[]
+
+  @@unique([productId, storeId])
+  @@index([storeId])
+  @@index([priceOre])
+}
+
+/// Én rad per prisendring: prisen gjelder fra recordedAt til neste rad.
+model PriceHistory {
+  id          String   @id @default(cuid())
+  offerId     String
+  offer       Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  priceOre    Int
+  shippingOre Int?
+  recordedAt  DateTime @default(now())
+
+  @@index([offerId, recordedAt])
+}

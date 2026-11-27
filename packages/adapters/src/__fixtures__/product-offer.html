@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="nb"><head>
+<title>Testprodukt</title>
+<!-- Syntetisk testside bygget etter schema.org/Googles eksempler for Product, ikke kopiert fra en butikk. -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[]}</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "Sony WH-1000XM5 trådløse hodetelefoner",
+  "image": ["https://example.com/img/xm5.jpg"],
+  "sku": "1205456",
+  "mpn": "WH1000XM5B",
+  "gtin13": "4548736132610",
+  "brand": { "@type": "Brand", "name": "Sony" },
+  "offers": {
+    "@type": "Offer",
+    "url": "https://example.com/product/1205456",
+    "priceCurrency": "NOK",
+    "price": "3490.00",
+    "priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "priceType": "https://schema.org/StrikethroughPrice",
+      "price": 4490,
+      "priceCurrency": "NOK"
+    },
+    "availability": "https://schema.org/InStock",
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": { "@type": "MonetaryAmount", "value": 0, "currency": "NOK" },
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 1, "unitCode": "DAY" },
+        "transitTime": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 3, "unitCode": "DAY" }
+      }
+    }
+  }
+}
+</script>
+</head><body></body></html>
